@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = "mongodb+srv://root:test123@cluster0.ezasw.mongodb.net/ENERGYCOMPANY?retryWrites=true&w=majority&appName=Cluster0&authSource=admin"
+}
+
+model companies {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  added      String
+  country    String
+  end_year   Int?
+  impact     Int?
+  insight    String
+  intensity  Int?
+  likelihood Int?
+  pestle     String
+  published  String
+  region     String
+  relevance  Int?
+  sector     String
+  source     String
+  start_year Int?
+  title      String
+  topic      String
+  url        String
+}
