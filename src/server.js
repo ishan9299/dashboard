@@ -76,7 +76,21 @@ app.get("/api/filter", async (req, res) => {
 	try {
 		const query = req.query;
 
+		// if you only selected country then keep all the
+		// values for countries if you selected other
+		// parameters then change them.
+		let changeSelectedFilters = false;
+
 		console.log(`query after reduction: ${Object.keys(query)}`);
+
+		if (Object.keys(query).length > 1) {
+			changeSelectedFilters = true;
+		}
+
+		if (query.end_year !== undefined) {
+			query.end_year = Number(query.end_year);
+		}
+
 		const data = await prisma.companies.findMany({
 			where: query
 		});
@@ -87,7 +101,8 @@ app.get("/api/filter", async (req, res) => {
 		const final_data = {
 			db: data,
 			filters: unique_filters,
-			query: Object.keys(query),
+			query: query,
+			changeSelectedFilters: changeSelectedFilters,
 		}
 
 		res.json(final_data);

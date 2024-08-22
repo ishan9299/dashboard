@@ -10,12 +10,11 @@ const filters = [
 	"region",
 ];
 
-function reset() {
+async function reset() {
 	d3.select("#chart").selectAll("*").remove();
-	fetch('/api/data')
-		.then(response => response.json())
-		.then(data => fillDropDown(data, []))
-		.then(() => getFilters());
+	const data = await fetch('/api/data');
+	fillDropDown(data, [], true);
+	getFilters();
 }
 
 const button = document.querySelector("#reset-button");
@@ -40,9 +39,10 @@ filters.forEach((filter) => {
 	filter_container.appendChild(newSelect);
 })
 
-function clearDropDown(query) {
+function clearDropDown(query, changeFilters) {
+	const query_keys = Object.keys(query);
 	filters.forEach((filter) => {
-		if (query.includes(filter) == false) {
+		if (query_keys.includes(filter) === false || changeFilters === true) {
 			const dropDown = document.querySelector(`#${filter}`);
 			dropDown.innerHTML = null;
 
@@ -54,15 +54,20 @@ function clearDropDown(query) {
 	})
 }
 
-function fillDropDown(data, query) {
+function fillDropDown(data, query, changeFilters) {
+	const query_keys = Object.keys(query);
 	filters.forEach((filter) => {
-		if (query.includes(filter) == false) {
+		if (query_keys.includes(filter) === false || changeFilters === true) {
 			const list = document.querySelector(`#${filter}`);
 			for (const val of data[filter]) {
 				const newOption = document.createElement("option");
 				newOption.text = `${val}`;
 				newOption.value = `${val}`;
 				list.appendChild(newOption);
+
+				if (query_keys.includes(filter) === true) {
+					list.value = query[filter];
+				}
 			}
 		}
 	})
@@ -91,12 +96,13 @@ dropdowns.forEach((dropdown) => {
 			const response = await fetch(url);
 			const data = await response.json();
 
+			console.log(data.db);
 			console.log(data.filters);
 
 			// const filter_data_len = Object.enteries(obj).length;
 
-			clearDropDown(data.query, data.query);
-			fillDropDown(data.filters, data.query);
+			clearDropDown(data.query, data.changeSelectedFilters);
+			fillDropDown(data.filters, data.query, data.changeSelectedFilters);
 			drawGraphs(data.db);
 		} catch (e) {
 			console.log(e);
@@ -108,9 +114,9 @@ const drawGraphs = (data) => {
 	// Set dimensions and margins
 	d3.select("#chart").selectAll("*").remove();
 
-	const margin = { top: 40, right: 30, bottom: 70, left: 60 },
-		width = 450 - margin.left - margin.right,
-		height = 400 - margin.top - margin.bottom;
+	const margin = { top: 40, right: 30, bottom: 70, left: 60 };
+	const width = 450 - margin.left - margin.right;
+	const height = 400 - margin.top - margin.bottom;
 
 	// Create SVG container
 	const svg = d3.select("#chart")
@@ -147,9 +153,12 @@ const drawGraphs = (data) => {
 		.enter()
 		.append("rect")
 		.attr("x", d => x(d.sector))
-		.attr("y", d => y(d.intensity))
+		.attr("y", d => y(d.intensity ?? 0))
 		.attr("width", x.bandwidth())
-		.attr("height", d => height - y(d.intensity))
+		.attr("height", d => {
+			const ans = Number(height) - y(d.intensity ?? 0);
+			return ans;
+		})
 		.attr("fill", "#69b3a2");
 
 	// Add title
@@ -196,9 +205,9 @@ const drawGraphs = (data) => {
 		.enter()
 		.append("rect")
 		.attr("x", d => x2(d.topic))
-		.attr("y", d => y2(d.likelihood))
+		.attr("y", d => y2(d.likelihood ?? 0))
 		.attr("width", x2.bandwidth())
-		.attr("height", d => height - y2(d.likelihood))
+		.attr("height", d => Number(height) - y2(d.likelihood ?? 0))
 		.attr("fill", "#69b3a2");
 
 	// Add title
